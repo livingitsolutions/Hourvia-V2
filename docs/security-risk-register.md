@@ -4,7 +4,7 @@ Updated by Sprint 0.1A. Severity is impact/readiness priority; open does not mea
 
 | ID | Priority | Finding | Evidence/status | Closure requirement |
 | --- | --- | --- | --- | --- |
-| SEC-001 | P0 | Credential-bearing package metadata | package.json repository.url contained a GitHub-format access token; removed locally. package-lock.json clean. No matching token in reachable history or local build artifacts. Credential validity and external exposure unknown | Operator verify expiration/revocation, replace automation credential if needed, assess remote logs/source archives/artifacts; fresh metadata test passes |
+| SEC-001 | P0 | Credential-bearing package metadata | package.json repository.url contained a GitHub-format access token; removed locally. package-lock.json clean. No matching token in reachable history or local build artifacts. Credential validity and external exposure unknown | Operator verify expiration/revocation, replace automation credential if needed, assess remote logs/source archives/artifacts; fresh metadata test passes. 2026-10-15: revocation OPERATOR-CONFIRMED (not independently verified); exposure review incomplete, see `docs/sec-001-exposure-review.md` |
 | SEC-002 | P0 | Managed runtime privilege separation unverified | No platform/DB connection. SDK override capability does not establish restricted role provisioning | Dedicated runtime login and migrator credentials; real privilege/RLS negatives in authorized sandbox |
 | SEC-003 | P0 | Transport composition and failure cleanup unverified | Installed stable transport sources retain explicit clients; peers/SDK absent; BEGIN/rollback cleanup concerns remain | Compile exact dependency bridge; isolated failure/reuse/transaction tests; exception-safe caller lifecycle |
 | SEC-004 | P0 | Ownership/member/session/bootstrap constraints absent | Sprint 0 schema intentionally inert and incomplete | Authorized schema/security implementation with deferred checks, session/issuer model and bootstrap idempotency tests |
@@ -34,3 +34,7 @@ SEC-003's COMMIT-tag false-success defect is corrected with explicit completion 
 ## Sprint 0.3A preflight status
 
 See `docs/sprint-0.3a-preflight-report.md`. The operator explicitly reported SEC-001 issuer revocation and exposure review as **not confirmed**, so SEC-001 stays P0 open and database execution is BLOCKED. The harness now requires `DB_MIGRATION_TARGET=hourvia-v2-verification`, rejects production/preview/V1/Netlify-managed targets and enforces verify-full TLS with an operator CA. Fingerprints are unchanged. 104 offline tests pass and 18 PostgreSQL cases skip. No connection, SQL or migration occurred.
+
+## SEC-001 exposure review (2026-10-15)
+
+See `docs/sec-001-exposure-review.md`. The operator confirmed deletion of the `git-access` classic PAT at GitHub. This is recorded as OPERATOR-CONFIRMED, not independently verified. Read-only scans found 0 token-format or credential-URL matches in all local git history, stashes, unreachable objects, the working tree, `dist/`, public GitHub metadata, PRs and comments, Actions (none exist), Netlify deploy metadata and all published deploy files. Netlify build logs, deploy source archives, GitHub security log and secret-scanning alerts were inaccessible. SEC-001 stays OPEN (P0) until the operator completes those reviews.
