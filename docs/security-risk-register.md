@@ -14,3 +14,19 @@ Updated by Sprint 0.1A. Severity is impact/readiness priority; open does not mea
 | SEC-008 | P1 | Billing/audit hardening incomplete | Segment consistency, frozen payloads and privileged audit tampering controls remain planned | Future reviewed schema constraints, allocation tests and external tamper-evident audit process |
 
 No secret value, secret fragment, credential-bearing URL or secret hash is recorded. SEC-001's local cleanup is complete; provider-side closure is not claimed. Previously emitted audit/runner logs are also part of operator exposure review; this run does not retrieve or repeat their contents.
+
+## Sprint 0.2 candidate status
+
+A quarantined security kernel and dormant transaction/session contracts now exist; see `docs/sprint-0.2-final-report.md`. SEC-004 is implemented at candidate level only, not closed: SQL remains unexecuted, the inert Drizzle business schema is unreconciled, and session/provider implementation remains absent. All 18 real PostgreSQL cases skipped. SEC-002/003/005 remain P0 pending actual role, transport, migration and recovery evidence. SEC-001 local regressions pass but issuer revocation and external exposure closure remain open. No persistence or migration was activated.
+
+## Sprint 0.2A source review
+
+See `docs/sprint-0.2a-final-report.md` for the complete coverage matrix and evidence classification. Candidate/schema/lock fingerprints match historical records. SQL/PLpgSQL parsing remains NOT VERIFIED and all 18 database cases remain skipped.
+
+New P0 source issue under SEC-003: transaction wrapper ignores command tags and can accept COMMIT returning ROLLBACK as success; offline synthetic-client reproduction confirms wrapper logic. P0 verification issue under SEC-004: generic harness errors can satisfy denial tests without proving constraint/policy enforcement. P1: NULL-sensitive replay comparisons, inconsistent context validation and incomplete race/tenant/fault cases. Narrow offline harness remediation sanitizes invalid-URL exceptions that could retain confidential input; no actual exposure is claimed. SQL/application changes were not authorized by the review scope and were not made. SEC-001 issuer/external exposure closure and managed role/migration/recovery gates stay open. Overall verdict remains BLOCKED.
+
+## Sprint 0.2B remediation status
+
+Source remediation and offline regressions pass; full evidence is in `docs/sprint-0.2b-final-report.md`. Historical SQL/schema fingerprints are preserved. A revised never-applied baseline is quarantined at `db/candidates/sprint-0.2b/001_security.sql`; it replaces the earlier fresh baseline for future verification and must never be applied after it.
+
+SEC-003's COMMIT-tag false-success defect is corrected with explicit completion tags, uncertain-outcome handling and expiring operation-scoped handles. SEC-004's NULL replay/context defects are corrected with pre-lookup validation, NULL-safe identity comparisons and canonical scoped context shared by SQL/RLS/application contracts. Harness negative tests now require SQLSTATE; setup failures cannot count as denial proof. Offline validation: 100 pass, 18 PostgreSQL cases skip. No runtime or incident gate closes on these results. SEC-001 issuer/external exposure, Netlify role/transport, session implementation, schema reconciliation and migration/recovery remain P0. Deterministic races, actual pool/fault lifecycle and external audit hardening remain P1. Overall acceptance remains BLOCKED pending separately authorized real verification.
