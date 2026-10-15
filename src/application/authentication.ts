@@ -16,3 +16,20 @@ export interface SessionAuthority {
 export interface MembershipReauthorization {
   requireCurrent(principal: ServerPrincipal, organizationId: string, operation: 'read' | 'revoke'): Promise<void>;
 }
+
+/** Canonical server-created transaction assertion; never deserialize from request JSON. */
+export type SecurityOperation = 'provision' | 'revoke' | 'read' | 'lookup';
+export interface TransactionAuthorization {
+  readonly principal: ServerPrincipal;
+  readonly organizationId: string;
+  readonly correlationId: string;
+  readonly operation: SecurityOperation;
+}
+export function validateTransactionAuthorization(context: TransactionAuthorization): void {
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuid.test(context.principal.userId) || !uuid.test(context.organizationId) || !uuid.test(context.correlationId)
+    || !context.principal.sessionId || !Number.isSafeInteger(context.principal.authenticationEpoch)
+    || context.principal.authenticationEpoch < 1 || !['provision','revoke','read','lookup'].includes(context.operation)) {
+    throw new Error('Invalid server transaction authorization');
+  }
+}
