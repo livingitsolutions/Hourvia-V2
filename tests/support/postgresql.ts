@@ -1,4 +1,6 @@
 import { execFile } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { isAbsolute } from 'node:path';
 import { promisify } from 'node:util';
 const run = promisify(execFile);
 export class DatabaseStatementError extends Error {
@@ -23,10 +25,27 @@ export function isolatedConnection(connection: string | undefined): URL {
   }
   return url;
 }
+export const VERIFICATION_TARGET = 'hourvia-v2-verification';
+/** Exact disposable label only; production/preview/V1/unknown labels and Netlify-managed URLs are rejected. */
+export function verificationTarget(env: NodeJS.ProcessEnv, connection: string | undefined): void {
+  if (env.DB_MIGRATION_TARGET !== VERIFICATION_TARGET) throw new Error('Explicit disposable verification target label required');
+  const url = isolatedConnection(connection);
+  if (/(?:^|_)(?:prod|production|preview|deploy|branch|staging|main|v1)(?:_|$)/.test(url.pathname.slice(1))) throw new Error('Non-disposable database name rejected');
+  // Equality only; managed values are never parsed, logged or returned.
+  for (const name of ['NETLIFY_DB_URL','NETLIFY_DATABASE_URL','NETLIFY_DATABASE_URL_UNPOOLED','NETLIFY_AGENT_RUNNER_DB_CONNECTION_STRING','DATABASE_URL']) {
+    if (env[name] && env[name] === connection) throw new Error('Netlify-managed or shared database target rejected');
+  }
+}
+/** verify-full only: an operator-supplied CA must authenticate the loopback server certificate. */
+export function tlsSettings(env: NodeJS.ProcessEnv): { PGSSLMODE: 'verify-full'; PGSSLROOTCERT: string } {
+  const root = env.HOURVIA_TEST_PG_SSLROOTCERT;
+  if (!root || !isAbsolute(root) || !existsSync(root)) throw new Error('Dedicated verify-full CA certificate required');
+  return { PGSSLMODE: 'verify-full', PGSSLROOTCERT: root };
+}
 export async function sql(connection: string | undefined, query: string): Promise<string> {
-  isolatedConnection(connection);
-  // Deliberately do not inherit PGHOST/PGSERVICE/PGOPTIONS or arbitrary runner settings.
-  const env = { PATH: process.env.PATH, LANG: 'C', PGDATABASE: connection, PGCONNECT_TIMEOUT: '5' };
+  verificationTarget(process.env, connection);
+  // Deliberately do not inherit PGHOST/PGSERVICE/PGOPTIONS, PGSSL* or arbitrary runner settings.
+  const env = { PATH: process.env.PATH, LANG: 'C', PGDATABASE: connection, PGCONNECT_TIMEOUT: '5', ...tlsSettings(process.env) };
   try {
     const { stdout } = await run('psql',['-X','-qAt','-v','ON_ERROR_STOP=1','-v','VERBOSITY=sqlstate','-c',query], { env, timeout: 10000 });
     return stdout.trim();
