@@ -18,3 +18,9 @@ No secret value, secret fragment, credential-bearing URL or secret hash is recor
 ## Sprint 0.2 candidate status
 
 A quarantined security kernel and dormant transaction/session contracts now exist; see `docs/sprint-0.2-final-report.md`. SEC-004 is implemented at candidate level only, not closed: SQL remains unexecuted, the inert Drizzle business schema is unreconciled, and session/provider implementation remains absent. All 18 real PostgreSQL cases skipped. SEC-002/003/005 remain P0 pending actual role, transport, migration and recovery evidence. SEC-001 local regressions pass but issuer revocation and external exposure closure remain open. No persistence or migration was activated.
+
+## Sprint 0.2A source review
+
+See `docs/sprint-0.2a-final-report.md` for the complete coverage matrix and evidence classification. Candidate/schema/lock fingerprints match historical records. SQL/PLpgSQL parsing remains NOT VERIFIED and all 18 database cases remain skipped.
+
+New P0 source issue under SEC-003: transaction wrapper ignores command tags and can accept COMMIT returning ROLLBACK as success; offline synthetic-client reproduction confirms wrapper logic. P0 verification issue under SEC-004: generic harness errors can satisfy denial tests without proving constraint/policy enforcement. P1: NULL-sensitive replay comparisons, inconsistent context validation and incomplete race/tenant/fault cases. Narrow offline harness remediation sanitizes invalid-URL exceptions that could retain confidential input; no actual exposure is claimed. SQL/application changes were not authorized by the review scope and were not made. SEC-001 issuer/external exposure closure and managed role/migration/recovery gates stay open. Overall verdict remains BLOCKED.

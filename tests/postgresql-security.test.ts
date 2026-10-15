@@ -10,7 +10,9 @@ const admin = process.env.HOURVIA_TEST_MIGRATOR_URL;
 const runtime = process.env.HOURVIA_TEST_RUNTIME_URL;
 async function sql(connection: string | undefined, query: string) {
   if (!connection) throw new Error('Dedicated isolated credentials required');
-  const url = new URL(connection);
+  let url: URL;
+  try { url = new URL(connection); }
+  catch { throw new Error('Invalid isolated credential configuration'); } // URL errors can carry confidential input.
   if (!['localhost','127.0.0.1','[::1]'].includes(url.hostname) || !url.pathname.startsWith('/hourvia_disposable_')) throw new Error('Disposable local target required');
   try {
     const { stdout } = await run('psql',['-X','-qAt','-v','ON_ERROR_STOP=1','-c',query], { env: { ...process.env, PGDATABASE: connection }, timeout: 10000 });
