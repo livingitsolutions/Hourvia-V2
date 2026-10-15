@@ -32,6 +32,9 @@ describe.skipIf(!enabled)('real disposable PostgreSQL security (pre-applied Spri
     if (a.pathname!==r.pathname || a.hostname!==r.hostname || a.port!==r.port || a.username===r.username) throw new Error('Separate logins on the same isolated target required');
     expect(await sql(admin,'SELECT current_user')).toBe('hv_migrator');
     expect(await sql(runtime,'SELECT current_user')).toBe('hv_runtime');
+    // Transport and version prerequisites: verified TLS on both logins; PostgreSQL 15+ server.
+    for (const login of [admin, runtime]) expect(await sql(login,'SELECT ssl FROM pg_stat_ssl WHERE pid=pg_backend_pid()')).toBe('t');
+    expect(Number(await sql(admin,"SELECT current_setting('server_version_num')"))).toBeGreaterThanOrEqual(150000);
     // Positive execution control prevents missing executable/SQL errors becoming denial proof.
     expect(await privileged("SELECT count(*) FROM pg_class WHERE relnamespace='hv'::regnamespace AND relkind='r'; COMMIT;")).toBe('7');
     expect((await privileged(`${ctx('read')} SELECT hv.context_valid('read'); COMMIT;`)).endsWith('t')).toBe(true);
