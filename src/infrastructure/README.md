@@ -1,0 +1,1 @@
+No runtime adapters in Sprint 0. Schema definitions are inert. Future Netlify Functions compose server authentication, membership lookup, authorization, tenant-scoped transactions, and Netlify Database adapters. No credentials or database client are present.

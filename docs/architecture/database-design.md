@@ -1,0 +1,22 @@
+# PostgreSQL design and safety
+
+`db/schema.ts` is an inert representative design: global users; organizations; memberships; clients; projects; time revisions; rates; periods; snapshots; allocations; audit; idempotency; monitoring. It is intentionally incomplete for later contexts and cannot be treated as a production schema. UUIDs have no active generator; application UUID generation is future work. Instants use timestamptz, durations integer seconds, monetary values bigint minor units. API serialization must use decimal strings for bigint, never JSON numbers.
+
+No connection, seed, live table, privilege grant, schema generation or migration application occurs. There is no database package initializer, drizzle configuration, kit dependency or migration directory. No persistence activation is allowed in Sprint 0. Static schema import only constructs metadata. No database package activation script is run.
+
+Ownership: deferred trigger and unique partial active-owner index are mandatory before deployment (see tenancy). Composite foreign keys prevent tenant mismatches. Additional migrations must enforce currency registry validation, immutable audit/snapshots/revisions, valid delegated permissions, rate exclusions, allocation-to-entry consistency and finalized invoice currency consistency. Current schema alone does not provide these guarantees.
+
+Runtime role: no ownership, superuser, BYPASSRLS, DDL, GRANT, or general audit UPDATE/DELETE. Migration role: isolated schema owner used only by controlled migration infrastructure, never runtime Functions. Database owner is a separate operational identity. Privileged credentials are never embedded in frontend or Functions.
+
+Strategy: forced RLS on tenant tables with both USING and WITH CHECK, scoped transaction-local organization context derived by server, combined with restricted write operations for ownership/finalization/audit. Default deny when context absent. Global identity access requires separately scoped operations. Owner/superuser RLS bypass must be tested; table ownership must not belong to runtime. Pool checkout must begin a transaction, use SET LOCAL (not session SET), and clear context by transaction completion. Do not assume adapter support for transaction-local settings or deferred constraints.
+
+Audit is append-only through restricted INSERT and trigger protections. No cascaded tenant deletion of history. Retention/erasure needs audited legal review, not ordinary DELETE permission. Finalized snapshots and allocations are immutable; corrections use compensating records, never edits.
+
+Transactions: provisioning and ownership/membership changes use SERIALIZABLE with bounded retry of serialization failures and organization row locks. Finalization locks period and eligible logical entries, reconciles exact approved revisions and rate versions, reserves unique allocations, writes snapshot/audit/idempotency together. Other corrections use READ COMMITTED plus compare-and-swap version and unique constraints. Reconciliation cannot run outside the finalization transaction. External exports occur after commit via future outbox contracts.
+
+Forward-only migrations: never modify applied SQL; review new migrations, backup and recovery, role/RLS tests and expand-contract compatibility. Generate only in a later authorized sprint. Netlify auto-application of migration files makes adding such files unsafe here. No files are generated. If automatic generation appears, stop before any database-changing operation.
+
+Integration tests require disposable PostgreSQL with matching version/extensions and distinct runtime/migration roles, never production or preview databases. Test simultaneous owner transfers, tenant ID swapping, RLS context leakage in pooled connections, deferred commit checks, duplicate billing races, serializable retries and audit tampering. None run in Sprint 0.
+
+Compatibility risks: Netlify native Drizzle adapter currently requires beta packages, conflicting with the stable-version requirement. Stable Drizzle pg-core is used only as a definition library. Adoption of the beta adapter requires an explicit future decision; @netlify/database remains the required future platform driver, not an external database. Verify transaction pinning, restricted role provisioning, FORCE RLS, extensions for exclusion constraints, database branch data handling and auto-generation behavior before activation. Context has inconsistent database availability signals; do not resolve by connecting.
+
