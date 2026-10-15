@@ -14,3 +14,7 @@ Updated by Sprint 0.1A. Severity is impact/readiness priority; open does not mea
 | SEC-008 | P1 | Billing/audit hardening incomplete | Segment consistency, frozen payloads and privileged audit tampering controls remain planned | Future reviewed schema constraints, allocation tests and external tamper-evident audit process |
 
 No secret value, secret fragment, credential-bearing URL or secret hash is recorded. SEC-001's local cleanup is complete; provider-side closure is not claimed. Previously emitted audit/runner logs are also part of operator exposure review; this run does not retrieve or repeat their contents.
+
+## Sprint 0.2 candidate status
+
+A quarantined security kernel and dormant transaction/session contracts now exist; see `docs/sprint-0.2-final-report.md`. SEC-004 is implemented at candidate level only, not closed: SQL remains unexecuted, the inert Drizzle business schema is unreconciled, and session/provider implementation remains absent. All 18 real PostgreSQL cases skipped. SEC-002/003/005 remain P0 pending actual role, transport, migration and recovery evidence. SEC-001 local regressions pass but issuer revocation and external exposure closure remain open. No persistence or migration was activated.
